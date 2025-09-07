@@ -1,0 +1,2962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeGenius - AI-Powered Resume Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --secondary: #7209b7;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #f9c74f;
+            --danger: #f94144;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --dark-bg: #1a1d24;
+            --card-bg: #242933;
+            --text-color: #f8f9fa;
+            --bg-color: #0f172a;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --dark-bg: #e9ecef;
+            --light-gray: #6c757d;
+            --dark: #212529;
+        }
+        
+        [data-theme="light"] .keyword {
+            color: white !important;
+        }
+        
+        [data-theme="light"] .feature-icon,
+        [data-theme="light"] .logo-icon,
+        [data-theme="light"] .tag i,
+        [data-theme="light"] .score-item h4,
+        [data-theme="light"] .feedback-section h3,
+        [data-theme="light"] .suggestion h4,
+        [data-theme="light"] .company-matching h3,
+        [data-theme="light"] .resume-builder h3,
+        [data-theme="light"] .step-title,
+        [data-theme="light"] .item-title,
+        [data-theme="light"] .preview-section-title {
+            color: inherit !important;
+        }
+        
+        [data-theme="light"] .score-item,
+        [data-theme="light"] .suggestion,
+        [data-theme="light"] .company-item,
+        [data-theme="light"] .experience-item,
+        [data-theme="light"] .education-item,
+        [data-theme="light"] .match-detail {
+            background: rgba(67, 97, 238, 0.1) !important;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: rgba(26, 29, 36, 0.8);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-icon {
+            margin-right: 10px;
+            font-size: 2rem;
+            color: var(--success);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 2rem;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        nav ul li a i {
+            margin-right: 5px;
+        }
+        
+        nav ul li a:hover {
+            color: var(--success);
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin-left: 2rem;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-left: 2rem;
+        }
+        
+        .auth-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: white;
+            border: 1px solid white;
+        }
+        
+        .signup-btn {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: var(--dark-bg);
+            z-index: 1000;
+            padding: 2rem;
+            transition: right 0.3s ease;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mobile-menu.open {
+            right: 0;
+        }
+        
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .close-menu {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .mobile-nav ul {
+            list-style: none;
+        }
+        
+        .mobile-nav ul li {
+            margin-bottom: 1rem;
+        }
+        
+        .mobile-nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .mobile-nav ul li a i {
+            margin-right: 10px;
+        }
+        
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234361ee" opacity="0.05"/><path d="M0 0L100 100" stroke="%234361ee" stroke-width="1" opacity="0.1"/></svg>');
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, var(--success), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            color: var(--text-color);
+        }
+        
+        .tagline {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background: rgba(67, 97, 238, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .tag i {
+            margin-right: 5px;
+            color: var(--success);
+        }
+        
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.5);
+        }
+        
+        .cta-button i {
+            margin-right: 8px;
+        }
+        
+        .features {
+            padding: 5rem 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--success);
+            font-size: 2.5rem;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--text-color);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+            background: rgba(76, 201, 240, 0.1);
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            font-size: 1.5rem;
+        }
+        
+        .feature-card p {
+            color: var(--text-color);
+            flex-grow: 1;
+        }
+        
+        .demo {
+            padding: 5rem 0;
+            background: rgba(26, 29, 36, 0.5);
+            border-radius: 20px;
+            margin: 0 2rem;
+        }
+        
+        .upload-container {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--primary);
+            border-radius: 10px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(67, 97, 238, 0.05);
+        }
+        
+        .upload-area:hover {
+            background: rgba(67, 97, 238, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .form-group select, .form-group textarea, .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--primary);
+            border-radius: 5px;
+            font-size: 1rem;
+            background: var(--dark-bg);
+            color: var(--text-color);
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .submit-btn i {
+            margin-right: 8px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .results {
+            display: none;
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+        
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+        }
+        
+        .overall-score {
+            text-align: center;
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 2rem;
+        }
+        
+        .score {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--success);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+        
+        .score-ring {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .score-details {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .score-item {
+            background: rgba(67, 97, 238, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+        
+        .score-item h4 {
+            color: var(--success);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .score-item h4 i {
+            margin-right: 8px;
+        }
+        
+        .score-item .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .feedback-section {
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+        
+        .feedback-section h3 {
+            color: var(--success);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .feedback-section h3 i {
+            margin-right: 10px;
+            color: var(--success); /* Fix for company matching icon */
+        }
+        
+        .suggestion {
+            background: rgba(26, 29, 36, 0.5);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+        
+        .suggestion h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .suggestion h4 i {
+            margin-right: 8px;
+        }
+        
+        .keyword {
+            display: inline-block;
+            background: var(--dark-bg);
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            margin: 0.2rem;
+            font-size: 0.9rem;
+        }
+        
+        .missing {
+            background-color: rgba(249, 65, 68, 0.2);
+            color: var(--danger);
+        }
+        
+        .present {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+        
+        .improvement {
+            background-color: rgba(249, 199, 79, 0.2);
+            color: var(--warning);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 5px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-btn i {
+            margin-right: 8px;
+        }
+        
+        .download-btn {
+            background: var(--primary);
+        }
+        
+        .download-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .save-btn {
+            background: var(--secondary);
+        }
+        
+        .save-btn:hover {
+            background: #5a08a0;
+        }
+        
+        .share-btn {
+            background: var(--success);
+        }
+        
+        .share-btn:hover {
+            background: #3bb4d8;
+        }
+        
+        .footer {
+            background: var(--dark-bg);
+            color: var(--text-color);
+            padding: 3rem 0;
+            text-align: center;
+            margin-top: 5rem;
+        }
+        
+        .footer p {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+        
+        .disclaimer {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .social-links a {
+            color: var(--text-color);
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: var(--success);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .loading-spinner {
+            border: 5px solid var(--card-bg);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            background: var(--success);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .notification.error {
+            background: var(--danger);
+        }
+        
+        /* Auth Modal */
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .auth-modal-content {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .close-auth {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .auth-tab {
+            padding: 0.8rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .auth-tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .auth-form {
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+        
+        .auth-form .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .auth-form .submit-btn {
+            margin-top: 1rem;
+        }
+        
+        .auth-form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-color);
+        }
+        
+        .auth-form-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        /* Company Matching Section */
+        .company-matching {
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+        
+        .company-matching h3 {
+            color: var(--success);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Company matching icon color changed to blue */
+        .company-matching h3 i {
+            margin-right: 10px;
+            color: var(--primary); /* Changed from var(--success) to var(--primary) for blue color */
+        }
+        
+        .company-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .company-item {
+            background: var(--dark-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .company-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .company-item.selected {
+            border: 2px solid var(--success);
+            background: rgba(76, 201, 240, 0.1);
+        }
+        
+        .company-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 0.5rem;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .match-result {
+            background: var(--dark-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+            display: none;
+        }
+        
+        .match-score {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .match-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .match-detail {
+            background: rgba(67, 97, 238, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .match-detail h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* AI Resume Builder */
+        .resume-builder {
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+        
+        .resume-builder h3 {
+            color: var(--success);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .resume-builder h3 i {
+            margin-right: 10px;
+            color: var(--success); /* Fix for resume builder icon */
+        }
+        
+        .builder-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .builder-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--light-gray);
+            z-index: 1;
+        }
+        
+        .builder-step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-weight: 600;
+        }
+        
+        .builder-step.active .step-number {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .builder-step.completed .step-number {
+            background: var(--success);
+            color: white;
+        }
+        
+        .step-content {
+            display: none;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+        
+        .builder-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        /* New UI Improvements */
+        .progress-bar {
+            height: 6px;
+            background: var(--dark-bg);
+            border-radius: 3px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .step-title {
+            font-size: 1.5rem;
+            color: var(--success);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-title i {
+            margin-right: 10px;
+            color: var(--success); /* Fix for step title icon */
+        }
+        
+        .experience-item, .education-item {
+            background: var(--dark-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .item-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .item-date {
+            color: var(--success);
+            font-size: 0.9rem;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .item-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .item-btn.edit {
+            color: var(--success);
+        }
+        
+        .item-btn.delete {
+            color: var(--danger);
+        }
+        
+        .add-item-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .add-item-btn i {
+            margin-right: 8px;
+        }
+        
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .skill-tag {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .skill-tag i {
+            margin-left: 8px;
+            cursor: pointer;
+        }
+        
+        .resume-preview {
+            background: white;
+            color: black;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            min-height: 400px;
+        }
+        
+        .preview-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .preview-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        
+        .preview-contact {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        
+        .preview-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .preview-section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Team Section */
+        .team {
+            padding: 5rem 0;
+            background: rgba(26, 29, 36, 0.5);
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .team-member {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .team-member-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+        }
+        
+        .team-member h3 {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .team-member-role {
+            color: var(--success);
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .team-member-desc {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .team-social {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .team-social a {
+            color: var(--text-color);
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .team-social a:hover {
+            color: var(--success);
+        }
+        
+        /* AI Models Section */
+        .ai-models {
+            padding: 5rem 0;
+        }
+        
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .model-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .model-icon {
+            font-size: 2.5rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+            background: rgba(76, 201, 240, 0.1);
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .model-card h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+        
+        .model-card p {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .model-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .model-features li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .model-features li i {
+            color: var(--success);
+            margin-right: 0.5rem;
+        }
+        
+        .model-select-btn {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .model-select-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .model-select-btn.selected {
+            background: var(--success);
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            nav ul {
+                margin-top: 1rem;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            nav ul li {
+                margin: 0.5rem;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .tagline {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .score-details {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .overall-score {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            nav ul {
+                display: none;
+            }
+            
+            .auth-buttons {
+                display: none;
+            }
+            
+            .theme-toggle {
+                margin-left: 0;
+            }
+            
+            .builder-steps {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .builder-steps::before {
+                display: none;
+            }
+            
+            .builder-step {
+                display: flex;
+                align-items: center;
+                text-align: left;
+            }
+            
+            .step-number {
+                margin: 0 1rem 0 0;
+            }
+        }
+
+        /* Fix for text overlap in overall score section */
+        .overall-score p {
+            margin: 10px 0;
+            line-height: 1.4;
+            max-width: 200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .overall-score p:last-child {
+            font-size: 0.9rem;
+        }
+        
+        /* File upload status */
+        .file-status {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--success);
+        }
+        
+        .file-status.error {
+            color: var(--danger);
+        }
+        
+        /* Backend status indicator */
+        .backend-status {
+            margin-top: 1rem;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 5px;
+            background: rgba(76, 201, 240, 0.1);
+        }
+        
+        .status-online {
+            color: var(--success);
+        }
+        
+        .status-offline {
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-modal-content">
+            <button class="close-auth" id="closeAuth">&times;</button>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Login</button>
+                <button class="auth-tab" data-tab="signup">Sign Up</button>
+            </div>
+            
+            <form class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+                <div class="auth-form-footer">
+                    <a href="#" id="forgotPassword">Forgot password?</a>
+                </div>
+            </form>
+            
+            <form class="auth-form" id="signupForm">
+                <div class="form-group">
+                    <label for="signupName">Full Name</label>
+                    <input type="text" id="signupName" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Sign Up</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo">
+                <span class="logo-icon"><i class="fas fa-brain"></i></span>
+                <span>ResumeGenius</span>
+            </div>
+            <button class="close-menu" id="closeMenu">&times;</button>
+        </div>
+        <div class="mobile-nav">
+            <ul>
+                <li><a href="#features"><i class="fas fa-star"></i>Features</a></li>
+                <li><a href="#demo"><i class="fas fa-play-circle"></i>Try It</a></li>
+                <li><a href="#team"><i class="fas fa-users"></i>Team</a></li>
+                <li><a href="#ai-models"><i class="fas fa-robot"></i>AI Models</a></li>
+                <li><a href="#" id="mobileLogin"><i class="fas fa-sign-in-alt"></i>Login</a></li>
+                <li><a href="#" id="mobileSignup"><i class="fas fa-user-plus"></i>Sign Up</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <span class="logo-icon"><i class="fas fa-brain"></i></span>
+                <span>ResumeGenius</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#features"><i class="fas fa-star"></i>Features</a></li>
+                    <li><a href="#demo"><i class="fas fa-play-circle"></i>Try It</a></li>
+                    <li><a href="#team"><i class="fas fa-users"></i>Team</a></li>
+                    <li><a href="#ai-models"><i class="fas fa-robot"></i>AI Models</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <button class="auth-btn login-btn" id="showLogin">Login</button>
+                <button class="auth-btn signup-btn" id="showSignup">Sign Up</button>
+            </div>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>AI-Powered Resume Analysis</h1>
+            <p>Get instant, personalized feedback on your resume with advanced AI technology. Improve your ATS score, optimize keywords, and land more interviews.</p>
+            
+            <div class="tagline">
+                <div class="tag"><i class="fas fa-robot"></i> AI-Powered Analysis</div>
+                <div class="tag"><i class="fas fa-bolt"></i> Instant Results</div>
+                <div class="tag"><i class="fas fa-chart-line"></i> ATS Optimization</div>
+                <div class="tag"><i class="fas fa-download"></i> PDF Reports</div>
+            </div>
+            
+            <a href="#demo" class="cta-button"><i class="fas fa-play"></i>Analyze Your Resume</a>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Advanced Resume Analysis</h2>
+            <p class="section-subtitle">Our AI-powered platform provides comprehensive resume feedback to help you land your dream job</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-search"></i></div>
+                    <h3>ATS Score Simulation</h3>
+                    <p>Get a real-time ATS compatibility score and see how your resume performs against applicant tracking systems.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-key"></i></div>
+                    <h3>Keyword Optimization</h3>
+                    <p>Identify missing keywords and skills from job descriptions to help your resume pass ATS screening.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                    <h3>Content Analysis</h3>
+                    <p>Evaluate the effectiveness of your experience descriptions and get suggestions for impactful improvements.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-magic"></i></div>
+                    <h3>Formatting Review</h3>
+                    <p>Check resume structure, layout, and readability to ensure professional presentation and ATS compatibility.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-bullseye"></i></div>
+                    <h3>Role Tailoring</h3>
+                    <p>Get specific suggestions to customize your resume for different job roles and industries.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
+                    <h3>Resume Redesign</h3>
+                    <p>Receive AI-generated redesign suggestions with improved formatting and content organization.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-download"></i></div>
+                    <h3>PDF Export</h3>
+                    <p>Download comprehensive PDF reports of your resume analysis with detailed feedback and suggestions.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-database"></i></div>
+                    <h3>Save & Load Analyses</h3>
+                    <p>Save your resume analyses and load them later for comparison or further refinement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="team">
+        <div class="container">
+            <h2 class="section-title">Our Team</h2>
+            <p class="section-subtitle">Meet the talented individuals behind ResumeGenius</p>
+            
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="team-member-img">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3>Faizan Akhtar</h3>
+                    <p class="team-member-role">AI Developer</p>
+                    <p class="team-member-desc">Specializes in machine learning algorithms for resume analysis and optimization.</p>
+                    <div class="team-social">
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+                
+                <div class="team-member">
+                    <div class="team-member-img">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3>Mayank Goswami</h3>
+                    <p class="team-member-role">Full-Stack Developer</p>
+                    <p class="team-member-desc">Expert in building responsive web applications with modern technologies.</p>
+                    <div class="team-social">
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                        <a href="#"><i class="fab fa-dev"></i></a>
+                    </div>
+                </div>
+                
+                <div class="team-member">
+                    <div class="team-member-img">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3>Murli Rathi</h3>
+                    <p class="team-member-role">UI/UX Designer</p>
+                    <p class="team-member-desc">Creates intuitive user experiences with a focus on accessibility and usability.</p>
+                    <div class="team-social">
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-dribbble"></i></a>
+                        <a href="#"><i class="fab fa-behance"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Models Section -->
+    <section id="ai-models" class="ai-models">
+        <div class="container">
+            <h2 class="section-title">Our AI Models</h2>
+            <p class="section-subtitle">Choose from our advanced AI models tailored for different resume analysis needs</p>
+            
+            <div class="models-grid">
+                <div class="model-card">
+                    <div class="model-icon"><i class="fas fa-robot"></i></div>
+                    <h3>GPT-5</h3>
+                    <p>Our most advanced model with deep contextual understanding and industry-specific knowledge.</p>
+                    <ul class="model-features">
+                        <li><i class="fas fa-check"></i> Deep contextual analysis</li>
+                        <li><i class="fas fa-check"></i> Industry-specific insights</li>
+                        <li><i class="fas fa-check"></i> Advanced ATS simulation</li>
+                        <li><i class="fas fa-check"></i> Personalized suggestions</li>
+                    </ul>
+                    <button class="model-select-btn" data-model="gpt5">Select GPT-5</button>
+                </div>
+                
+                <div class="model-card">
+                    <div class="model-icon"><i class="fas fa-brain"></i></div>
+                    <h3>Gemini Ultra</h3>
+                    <p>Specialized in technical roles with enhanced keyword optimization for STEM positions.</p>
+                    <ul class="model-features">
+                        <li><i class="fas fa-check"></i> Technical role specialization</li>
+                        <li><i class="fas fa-check"></i> STEM keyword optimization</li>
+                        <li><i class="fas fa-check"></i> Code and project analysis</li>
+                        <li><i class="fas fa-check"></i> GitHub profile integration</li>
+                    </ul>
+                    <button class="model-select-btn" data-model="gemini">Select Gemini Ultra</button>
+                </div>
+                
+                <div class="model-card">
+                    <div class="model-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <h3>Claude 4</h3>
+                    <p>Ideal for academic and research positions with focus on publications and research experience.</p>
+                    <ul class="model-features">
+                        <li><i class="fas fa-check"></i> Academic focus</li>
+                        <li><i class="fas fa-check"></i> Research paper analysis</li>
+                        <li><i class="fas fa-check"></i> Citation optimization</li>
+                        <li><i class="fas fa-check"></i> Grant writing tips</li>
+                    </ul>
+                    <button class="model-select-btn" data-model="claude">Select Claude 4</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo" class="demo">
+        <div class="container">
+            <h2 class="section-title">Analyze Your Resume</h2>
+            <p class="section-subtitle">Upload your resume and get instant AI-powered feedback to improve your chances of landing interviews</p>
+            
+            <div class="upload-container">
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <p>Drag & drop your resume here or click to browse</p>
+                    <p><small>Supported formats: PDF, DOCX, TXT (Max size: 5MB)</small></p>
+                    <input type="file" id="resumeUpload" accept=".pdf,.docx,.txt" style="display: none;">
+                </div>
+                <div class="file-status" id="fileStatus"></div>
+                
+                <div class="form-group">
+                    <label for="jobRole"><i class="fas fa-briefcase"></i> Target Job Role</label>
+                    <select id="jobRole">
+                        <option value="">Select a job role</option>
+                        <option value="data_scientist">Data Scientist</option>
+                        <option value="software_engineer">Software Engineer</option>
+                        <option value="product_manager">Product Manager</option>
+                        <option value="ux_designer">UX Designer</option>
+                        <option value="marketing_manager">Marketing Manager</option>
+                        <option value="other">Other (specify in job description)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="jobDescription"><i class="fas fa-file-alt"></i> Job Description (Optional but recommended)</label>
+                    <textarea id="jobDescription" placeholder="Paste the job description here for more tailored feedback..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="aiModel"><i class="fas fa-robot"></i> Select AI Model</label>
+                    <select id="aiModel">
+                        <option value="gpt5">GPT-5 (Most Advanced)</option>
+                        <option value="gemini">Gemini Ultra</option>
+                        <option value="claude">Claude 4</option>
+                        <option value="llama">Llama 4</option>
+                        <option value="spark">AI Spark Custom Model</option>
+                    </select>
+                </div>
+                
+                <button class="submit-btn" id="analyzeBtn"><i class="fas fa-cogs"></i> Analyze Resume</button>
+                
+                <div class="backend-status">
+                    <span id="backendStatus"><i class="fas fa-circle status-online"></i> Backend server connected</span>
+                </div>
+            </div>
+            
+            <div class="loading" id="loadingSection">
+                <div class="loading-spinner"></div>
+                <p>Analyzing your resume with AI... This may take a few seconds</p>
+                <p>Processing: <span id="processingStep">Initializing analysis</span></p>
+                <p>AI Model: <span id="selectedModel">GPT-5</span></p>
+            </div>
+            
+            <div class="results" id="resultsSection">
+                <div class="score-header">
+                    <div class="overall-score">
+                        <div class="score-ring">
+                            <canvas id="scoreChart" width="200" height="200"></canvas>
+                            <div class="score">78%</div>
+                        </div>
+                        <p>Good foundation, but needs improvements to be competitive</p>
+                        <p>Analyzed with: <strong id="modelUsed">Gemini Ultra</strong></p>
+                    </div>
+                    
+                    <div class="score-details">
+                        <div class="score-item">
+                            <h4><i class="fas fa-robot"></i> ATS Score</h4>
+                            <div class="value">72%</div>
+                            <p>Compatibility with tracking systems</p>
+                        </div>
+                        <div class="score-item">
+                            <h4><i class="fas fa-file-alt"></i> Content</h4>
+                            <div class="value">85%</div>
+                            <p>Quality of information</p>
+                        </div>
+                        <div class="score-item">
+                            <h4><i class="fas fa-paint-brush"></i> Formatting</h4>
+                            <div class="value">90%</div>
+                            <p>Layout and structure</p>
+                        </div>
+                        <div class="score-item">
+                            <h4><i class="fas fa-key"></i> Keywords</h4>
+                            <div class="value">65%</div>
+                            <p>Relevant terms for your industry</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3><i class="fas fa-key"></i> Keyword Analysis</h3>
+                    <p>These keywords are important for your target role. Green indicates keywords found in your resume, red indicates missing keywords:</p>
+                    <div>
+                        <span class="keyword present">Python</span>
+                        <span class="keyword present">Machine Learning</span>
+                        <span class="keyword missing">TensorFlow</span>
+                        <span class="keyword present">Data Analysis</span>
+                        <span class="keyword missing">Cloud Computing</span>
+                        <span class="keyword present">SQL</span>
+                        <span class="keyword missing">AWS</span>
+                        <span class="keyword present">Data Visualization</span>
+                        <span class="keyword missing">PyTorch</span>
+                        <span class="keyword present">Statistical Analysis</span>
+                    </div>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3><i class="fas fa-file-alt"></i> Content Feedback</h3>
+                    <div class="suggestion">
+                        <h4><i class="fas fa-check-circle"></i> Work Experience</h4>
+                        <p>✅ Your bullet points show good use of action verbs and quantifiable results.</p>
+                        <p>⚠️ Add more metrics to your achievements. Instead of "improved system performance," try "improved system performance by 40% through optimization."</p>
+                    </div>
+                    <div class="suggestion">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Skills Section</h4>
+                        <p>❌ List your technical skills in categories for better readability. Consider adding: TensorFlow, AWS, PyTorch, Docker.</p>
+                    </div>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3><i class="fas fa-paint-brush"></i> Formatting Suggestions</h3>
+                    <p>✅ Your resume length is appropriate (2 pages).</p>
+                    <p>⚠️ Consider using a more modern font like Calibri or Lato instead of Times New Roman.</p>
+                    <p>❌ Ensure consistent spacing between sections.</p>
+                    <p>✅ Good use of bullet points and white space.</p>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3><i class="fas fa-lightbulb"></i> AI-Generated Improvements</h3>
+                    <div class="suggestion">
+                        <h4><i class="fas fa-code"></i> Technical Skills Section</h4>
+                        <p><strong>Original:</strong> "Python, SQL, Java, Machine Learning, Data Analysis"</p>
+                        <p><strong>Improved:</strong> "Programming: Python, SQL, Java, R | Machine Learning: TensorFlow, Scikit-learn, Neural Networks | Data Analysis: Pandas, NumPy, Data Visualization"</p>
+                    </div>
+                    <div class="suggestion">
+                        <h4><i class="fas fa-briefcase"></i> Experience Bullet Point</h4>
+                        <p><strong>Original:</strong> "Responsible for developing machine learning models"</p>
+                        <p><strong>Improved:</strong> "Developed and deployed 3 machine learning models that improved prediction accuracy by 22% and reduced false positives by 15%"</p>
+                    </div>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3><i class="fas fa-tachometer-alt"></i> ATS Optimization Tips</h3>
+                    <div class="suggestion">
+                        <h4><i class="fas fa-robot"></i> Applicant Tracking System Compatibility</h4>
+                        <p>✅ Your resume uses standard section headings</p>
+                        <p>❌ Avoid using tables and columns as they can confuse ATS systems</p>
+                        <p>✅ Good use of standard fonts</p>
+                        <p>⚠️ Include more industry-specific keywords from the job description</p>
+                    </div>
+                </div>
+                
+                <!-- Company Matching Section -->
+                <div class="company-matching">
+                    <h3><i class="fas fa-building"></i> Company Matching</h3>
+                    <p>Select companies to see how well your resume matches their requirements:</p>
+                    
+                    <div class="company-grid">
+                        <div class="company-item" data-company="Google">
+                            <div class="company-logo">G</div>
+                            <p>Google</p>
+                        </div>
+                        <div class="company-item" data-company="Microsoft">
+                            <div class="company-logo">M</div>
+                            <p>Microsoft</p>
+                        </div>
+                        <div class="company-item" data-company="Amazon">
+                            <div class="company-logo">A</div>
+                            <p>Amazon</p>
+                        </div>
+                        <div class="company-item" data-company="Apple">
+                            <div class="company-logo">A</div>
+                            <p>Apple</p>
+                        </div>
+                        <div class="company-item" data-company="Facebook">
+                            <div class="company-logo">F</div>
+                            <p>Facebook</p>
+                        </div>
+                        <div class="company-item" data-company="Netflix">
+                            <div class="company-logo">N</div>
+                            <p>Netflix</p>
+                        </div>
+                    </div>
+                    
+                    <button class="submit-btn" id="matchCompanies"><i class="fas fa-calculator"></i> Calculate Match Score</button>
+                    
+                    <div class="match-result" id="matchResult">
+                        <div class="match-score">82% Match</div>
+                        <div class="match-details">
+                            <div class="match-detail">
+                                <h4>Culture Fit</h4>
+                                <p>Your resume shows strong alignment with Google's collaborative culture.</p>
+                            </div>
+                            <div class="match-detail">
+                                <h4>Skills Match</h4>
+                                <p>You have 85% of the technical skills Google looks for in this role.</p>
+                            </div>
+                            <div class="match-detail">
+                                <h4>Experience Level</h4>
+                                <p>Your experience matches the seniority level Google is seeking.</p>
+                            </div>
+                            <div class="match-detail">
+                                <h4>Recommendations</h4>
+                                <p>Focus more on leadership experience and project scale to improve your match.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Resume Builder Section -->
+                <div class="resume-builder">
+                    <h3><i class="fas fa-wand-magic-sparkles"></i> AI Resume Builder</h3>
+                    <p>Use our AI-powered tool to build an optimized resume from scratch:</p>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    
+                    <div class="builder-steps">
+                        <div class="builder-step active" data-step="1">
+                            <div class="step-number">1</div>
+                            <p>Personal Info</p>
+                        </div>
+                        <div class="builder-step" data-step="2">
+                            <div class="step-number">2</div>
+                            <p>Experience</p>
+                        </div>
+                        <div class="builder-step" data-step="3">
+                            <div class="step-number">3</div>
+                            <p>Education</p>
+                        </div>
+                        <div class="builder-step" data-step="4">
+                            <div class="step-number">4</div>
+                            <p>Skills</p>
+                        </div>
+                        <div class="builder-step" data-step="5">
+                            <div class="step-number">5</div>
+                            <p>Review</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 1: Personal Info -->
+                    <div class="step-content active" data-step="1">
+                        <h3 class="step-title"><i class="fas fa-user"></i> Personal Information</h3>
+                        <div class="form-group">
+                            <label for="builderName">Full Name *</label>
+                            <input type="text" id="builderName" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="builderEmail">Email *</label>
+                            <input type="email" id="builderEmail" placeholder="john.doe@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="builderPhone">Phone *</label>
+                            <input type="tel" id="builderPhone" placeholder="+1 (555) 123-4567" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="builderLocation">Location *</label>
+                            <input type="text" id="builderLocation" placeholder="San Francisco, CA" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="builderLinkedIn">LinkedIn (Optional)</label>
+                            <input type="url" id="builderLinkedIn" placeholder="https://linkedin.com/in/johndoe">
+                        </div>
+                        <div class="form-group">
+                            <label for="builderPortfolio">Portfolio/Website (Optional)</label>
+                            <input type="url" id="builderPortfolio" placeholder="https://johndoeportfolio.com">
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Experience -->
+                    <div class="step-content" data-step="2">
+                        <h3 class="step-title"><i class="fas fa-briefcase"></i> Work Experience</h3>
+                        <div id="experienceContainer">
+                            <!-- Experience items will be added here -->
+                        </div>
+                        <button type="button" class="add-item-btn" id="addExperience">
+                            <i class="fas fa-plus"></i> Add Experience
+                        </button>
+                    </div>
+                    
+                    <!-- Step 3: Education -->
+                    <div class="step-content" data-step="3">
+                        <h3 class="step-title"><i class="fas fa-graduation-cap"></i> Education</h3>
+                        <div id="educationContainer">
+                            <!-- Education items will be added here -->
+                        </div>
+                        <button type="button" class="add-item-btn" id="addEducation">
+                            <i class="fas fa-plus"></i> Add Education
+                        </button>
+                    </div>
+                    
+                    <!-- Step 4: Skills -->
+                    <div class="step-content" data-step="4">
+                        <h3 class="step-title"><i class="fas fa-tools"></i> Skills</h3>
+                        <div class="form-group">
+                            <label for="skillInput">Add Skills (Press Enter after each skill)</label>
+                            <input type="text" id="skillInput" placeholder="e.g., JavaScript, Python, Project Management">
+                        </div>
+                        <div class="skills-container" id="skillsContainer">
+                            <!-- Skills will be added here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5: Review -->
+                    <div class="step-content" data-step="5">
+                        <h3 class="step-title"><i class="fas fa-eye"></i> Review Your Resume</h3>
+                        <div class="resume-preview" id="resumePreview">
+                            <div class="preview-header">
+                                <div class="preview-name" id="previewName">John Doe</div>
+                                <div class="preview-contact" id="previewContact">
+                                    <!-- Contact info will be added here -->
+                                </div>
+                            </div>
+                            <div class="preview-section">
+                                <div class="preview-section-title">Summary</div>
+                                <p id="previewSummary">Experienced professional with a strong background in...</p>
+                            </div>
+                            <div class="preview-section">
+                                <div class="preview-section-title">Experience</div>
+                                <div id="previewExperience">
+                                    <!-- Experience preview will be added here -->
+                                </div>
+                            </div>
+                            <div class="preview-section">
+                                <div class="preview-section-title">Education</div>
+                                <div id="previewEducation">
+                                    <!-- Education preview will be added here -->
+                                </div>
+                            </div>
+                            <div class="preview-section">
+                                <div class="preview-section-title">Skills</div>
+                                <div id="previewSkills">
+                                    <!-- Skills preview will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="builder-navigation">
+                        <button class="auth-btn login-btn" id="prevStep" disabled>Previous</button>
+                        <button class="auth-btn signup-btn" id="nextStep">Next</button>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn download-btn" id="downloadPdf"><i class="fas fa-download"></i> Download PDF Report</button>
+                    <button class="action-btn save-btn" id="saveAnalysis"><i class="fas fa-save"></i> Save Analysis</button>
+                    <button class="action-btn share-btn" id="shareResults"><i class="fas fa-share-alt"></i> Share Results</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>ResumeGenius - AI-Powered Resume Reviewer</p>
+            <p class="disclaimer">
+                Disclaimer: This tool uses AI to analyze your resume and provide suggestions. 
+                We do not store your resume data after analysis, and all processing happens securely in your browser. 
+                Results are generated algorithmically and should be considered as guidance rather than absolute truth.
+            </p>
+            
+            <div class="social-links">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-product-hunt"></i></a>
+            </div>
+            
+            <p>© 2023 ResumeGenius | Team AI Spark | Hackathon Winning Project</p>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const authModal = document.getElementById('authModal');
+        const showLogin = document.getElementById('showLogin');
+        const showSignup = document.getElementById('showSignup');
+        const closeAuth = document.getElementById('closeAuth');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const authForms = document.querySelectorAll('.auth-form');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMenu = document.getElementById('closeMenu');
+        const mobileLogin = document.getElementById('mobileLogin');
+        const mobileSignup = document.getElementById('mobileSignup');
+        const companyItems = document.querySelectorAll('.company-item');
+        const matchCompanies = document.getElementById('matchCompanies');
+        const matchResult = document.getElementById('matchResult');
+        const nextStep = document.getElementById('nextStep');
+        const prevStep = document.getElementById('prevStep');
+        const builderSteps = document.querySelectorAll('.builder-step');
+        const stepContents = document.querySelectorAll('.step-content');
+        const progressFill = document.getElementById('progressFill');
+        const addExperience = document.getElementById('addExperience');
+        const experienceContainer = document.getElementById('experienceContainer');
+        const addEducation = document.getElementById('addEducation');
+        const educationContainer = document.getElementById('educationContainer');
+        const skillInput = document.getElementById('skillInput');
+        const skillsContainer = document.getElementById('skillsContainer');
+        const modelSelectButtons = document.querySelectorAll('.model-select-btn');
+        const aiModelSelect = document.getElementById('aiModel');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('resumeUpload');
+        const fileStatus = document.getElementById('fileStatus');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const loadingSection = document.getElementById('loadingSection');
+        const processingStep = document.getElementById('processingStep');
+        const backendStatus = document.getElementById('backendStatus');
+        const selectedModel = document.getElementById('selectedModel');
+        const modelUsed = document.getElementById('modelUsed');
+        const jobRoleSelect = document.getElementById('jobRole');
+        const jobDescriptionTextarea = document.getElementById('jobDescription');
+        
+        // Chart instance
+        let scoreChartInstance = null;
+        
+        // Resume data object to store all information
+        const resumeData = {
+            personalInfo: {},
+            experiences: [],
+            education: [],
+            skills: []
+        };
+        
+        // User authentication state
+        let isLoggedIn = false;
+        let currentUser = null;
+        
+        // Theme Toggle
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            themeToggle.innerHTML = savedTheme === 'light' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        }
+        
+        // Auth Modal
+        showLogin.addEventListener('click', () => {
+            authModal.style.display = 'flex';
+            switchAuthTab('login');
+        });
+        
+        showSignup.addEventListener('click', () => {
+            authModal.style.display = 'flex';
+            switchAuthTab('signup');
+        });
+        
+        closeAuth.addEventListener('click', () => {
+            authModal.style.display = 'none';
+            clearAuthForms();
+        });
+        
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) {
+                authModal.style.display = 'none';
+                clearAuthForms();
+            }
+        });
+        
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                switchAuthTab(tabName);
+                clearAuthForms();
+            });
+        });
+        
+        function switchAuthTab(tabName) {
+            authTabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            authForms.forEach(form => {
+                if (form.id === `${tabName}Form`) {
+                    form.classList.add('active');
+                } else {
+                    form.classList.remove('active');
+                }
+            });
+        }
+        
+        function clearAuthForms() {
+            document.getElementById('loginForm').reset();
+            document.getElementById('signupForm').reset();
+        }
+        
+        // Mobile Menu
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('open');
+        });
+        
+        closeMenu.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+        });
+        
+        mobileLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            mobileMenu.classList.remove('open');
+            authModal.style.display = 'flex';
+            switchAuthTab('login');
+        });
+        
+        mobileSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            mobileMenu.classList.remove('open');
+            authModal.style.display = 'flex';
+            switchAuthTab('signup');
+        });
+        
+        // File Upload Handling
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#4361ee';
+            dropZone.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#4361ee';
+            dropZone.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileUpload(fileInput.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFileUpload(fileInput.files[0]);
+            }
+        });
+        
+        function handleFileUpload(file) {
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                fileStatus.textContent = 'File size exceeds 5MB limit. Please choose a smaller file.';
+                fileStatus.className = 'file-status error';
+                return;
+            }
+            
+            // Check file type
+            const validExtensions = ['.pdf', '.docx', '.txt'];
+            const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            
+            if (!validExtensions.includes(fileExtension)) {
+                fileStatus.textContent = 'Invalid file type. Please upload a PDF, DOCX, or TXT file.';
+                fileStatus.className = 'file-status error';
+                return;
+            }
+            
+            // Valid file
+            fileStatus.textContent = `File selected: ${file.name}`;
+            fileStatus.className = 'file-status';
+            dropZone.querySelector('p').textContent = file.name;
+        }
+        
+        // Company Matching
+        companyItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('selected');
+            });
+        });
+        
+        matchCompanies.addEventListener('click', () => {
+            const selectedCompanies = document.querySelectorAll('.company-item.selected');
+            if (selectedCompanies.length === 0) {
+                showNotification('Please select at least one company', 'error');
+                return;
+            }
+            
+            // Simulate matching process
+            showNotification('Calculating company matches...', 'success');
+            
+            setTimeout(() => {
+                matchResult.style.display = 'block';
+                showNotification('Company matching completed!', 'success');
+                
+                // Scroll to results
+                matchResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 1500);
+        });
+        
+        // AI Model Selection
+        modelSelectButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const model = button.getAttribute('data-model');
+                
+                // Update UI
+                modelSelectButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                
+                // Update dropdown
+                aiModelSelect.value = model;
+                
+                showNotification(`${button.textContent} selected`, 'success');
+            });
+        });
+        
+        // Resume Analysis
+        analyzeBtn.addEventListener('click', () => {
+            // Simple validation
+            if (!fileInput.files.length) {
+                showNotification('Please upload your resume first', 'error');
+                return;
+            }
+            
+            if (!jobRoleSelect.value) {
+                showNotification('Please select a target job role', 'error');
+                return;
+            }
+            
+            // Get selected AI model
+            const selectedModelValue = aiModelSelect.options[aiModelSelect.selectedIndex].text;
+            selectedModel.textContent = selectedModelValue;
+            modelUsed.textContent = selectedModelValue;
+            
+            // Show loading state
+            loadingSection.style.display = 'block';
+            analyzeBtn.innerHTML = '<i class="fas fa-cogs"></i> Analyzing...';
+            analyzeBtn.disabled = true;
+            
+            // Simulate processing steps
+            const steps = [
+                'Initializing analysis',
+                'Parsing resume content',
+                'Extracting keywords',
+                'Analyzing ATS compatibility',
+                'Generating suggestions',
+                'Finalizing report'
+            ];
+            
+            let step = 0;
+            const processInterval = setInterval(() => {
+                if (step < steps.length) {
+                    processingStep.textContent = steps[step];
+                    step++;
+                } else {
+                    clearInterval(processInterval);
+                }
+            }, 800);
+            
+            // Simulate analysis process with more realistic timing
+            setTimeout(() => {
+                loadingSection.style.display = 'none';
+                resultsSection.style.display = 'block';
+                analyzeBtn.innerHTML = '<i class="fas fa-cogs"></i> Analyze Resume';
+                analyzeBtn.disabled = false;
+                
+                // Update scores based on job role
+                updateScoresBasedOnJobRole(jobRoleSelect.value);
+                
+                // Draw score chart
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+                
+                // Destroy previous chart if it exists
+                if (scoreChartInstance) {
+                    scoreChartInstance.destroy();
+                }
+                
+                scoreChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ATS Score', 'Content', 'Formatting', 'Keywords'],
+                        datasets: [{
+                            data: [
+                                parseInt(document.querySelector('.score-item:nth-child(1) .value').textContent),
+                                parseInt(document.querySelector('.score-item:nth-child(2) .value').textContent),
+                                parseInt(document.querySelector('.score-item:nth-child(3) .value').textContent),
+                                parseInt(document.querySelector('.score-item:nth-child(4) .value').textContent)
+                            ],
+                            backgroundColor: [
+                                '#4361ee',
+                                '#4cc9f0',
+                                '#7209b7',
+                                '#f9c74f'
+                            ],
+                            borderWidth: 0,
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                });
+                
+                // Update overall score
+                const overallScore = Math.round((
+                    parseInt(document.querySelector('.score-item:nth-child(1) .value').textContent) +
+                    parseInt(document.querySelector('.score-item:nth-child(2) .value').textContent) +
+                    parseInt(document.querySelector('.score-item:nth-child(3) .value').textContent) +
+                    parseInt(document.querySelector('.score-item:nth-child(4) .value').textContent)
+                ) / 4);
+                
+                document.querySelector('.score').textContent = `${overallScore}%`;
+                
+                // Update feedback based on job description if provided
+                if (jobDescriptionTextarea.value.trim()) {
+                    updateFeedbackBasedOnJobDescription(jobDescriptionTextarea.value);
+                }
+                
+                // Scroll to results
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                showNotification('Resume analysis completed successfully!', 'success');
+            }, 5000);
+        });
+        
+        function updateScoresBasedOnJobRole(jobRole) {
+            const scoreValues = document.querySelectorAll('.score-item .value');
+            const overallScore = document.querySelector('.score');
+            
+            // Different job roles get different scores for demonstration
+            switch(jobRole) {
+                case 'data_scientist':
+                    scoreValues[0].textContent = '72'; // ATS Score
+                    scoreValues[1].textContent = '85'; // Content
+                    scoreValues[2].textContent = '90'; // Formatting
+                    scoreValues[3].textContent = '65'; // Keywords
+                    overallScore.textContent = '78%';
+                    break;
+                case 'software_engineer':
+                    scoreValues[0].textContent = '80';
+                    scoreValues[1].textContent = '75';
+                    scoreValues[2].textContent = '85';
+                    scoreValues[3].textContent = '70';
+                    overallScore.textContent = '77%';
+                    break;
+                case 'product_manager':
+                    scoreValues[0].textContent = '85';
+                    scoreValues[1].textContent = '90';
+                    scoreValues[2].textContent = '80';
+                    scoreValues[3].textContent = '75';
+                    overallScore.textContent = '82%';
+                    break;
+                default:
+                    scoreValues[0].textContent = '75';
+                    scoreValues[1].textContent = '80';
+                    scoreValues[2].textContent = '85';
+                    scoreValues[3].textContent = '70';
+                    overallScore.textContent = '77%';
+            }
+        }
+        
+        function updateFeedbackBasedOnJobDescription(jobDescription) {
+            // Simple keyword extraction for demonstration
+            const keywordsSection = document.querySelector('.feedback-section:nth-child(2)');
+            const keywordsContainer = keywordsSection.querySelector('div');
+            
+            // Clear existing keywords
+            keywordsContainer.innerHTML = '';
+            
+            // Extract some keywords from job description (simple implementation)
+            const commonKeywords = ['python', 'javascript', 'java', 'sql', 'machine learning', 'data analysis', 
+                                  'cloud', 'aws', 'azure', 'docker', 'kubernetes', 'agile', 'scrum', 'leadership'];
+            
+            const text = jobDescription.toLowerCase();
+            const foundKeywords = [];
+            const missingKeywords = [];
+            
+            commonKeywords.forEach(keyword => {
+                if (text.includes(keyword)) {
+                    foundKeywords.push(keyword);
+                } else if (Math.random() > 0.5) { // Randomly add some missing keywords for demo
+                    missingKeywords.push(keyword);
+                }
+            });
+            
+            // Add found keywords
+            foundKeywords.forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'keyword present';
+                span.textContent = keyword;
+                keywordsContainer.appendChild(span);
+            });
+            
+            // Add missing keywords
+            missingKeywords.forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'keyword missing';
+                span.textContent = keyword;
+                keywordsContainer.appendChild(span);
+            });
+            
+            if (foundKeywords.length === 0 && missingKeywords.length === 0) {
+                keywordsContainer.innerHTML = '<p>No significant keywords found in the job description.</p>';
+            }
+        }
+        
+        // Resume Builder Steps
+        let currentStep = 1;
+        const totalSteps = 5;
+        
+        // Update progress bar
+        function updateProgress() {
+            const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            progressFill.style.width = `${progressPercentage}%`;
+        }
+        
+        nextStep.addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                // Validate current step
+                if (!validateStep(currentStep)) {
+                    showNotification('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Save step data
+                saveStepData(currentStep);
+                
+                // Update steps
+                document.querySelector(`.builder-step[data-step="${currentStep}"]`).classList.remove('active');
+                document.querySelector(`.step-content[data-step="${currentStep}"]`).classList.remove('active');
+                
+                currentStep++;
+                
+                document.querySelector(`.builder-step[data-step="${currentStep}"]`).classList.add('active');
+                document.querySelector(`.step-content[data-step="${currentStep}"]`).classList.add('active');
+                
+                // Update buttons
+                prevStep.disabled = false;
+                if (currentStep === totalSteps) {
+                    nextStep.textContent = 'Generate Resume';
+                    updateResumePreview();
+                }
+                
+                updateProgress();
+            } else {
+                // Generate resume
+                generateResume();
+            }
+        });
+        
+        prevStep.addEventListener('click', () => {
+            if (currentStep > 1) {
+                // Update steps
+                document.querySelector(`.builder-step[data-step="${currentStep}"]`).classList.remove('active');
+                document.querySelector(`.step-content[data-step="${currentStep}"]`).classList.remove('active');
+                
+                currentStep--;
+                
+                document.querySelector(`.builder-step[data-step="${currentStep}"]`).classList.add('active');
+                document.querySelector(`.step-content[data-step="${currentStep}"]`).classList.add('active');
+                
+                // Update buttons
+                if (currentStep === 1) {
+                    prevStep.disabled = true;
+                }
+                nextStep.textContent = 'Next';
+                
+                updateProgress();
+            }
+        });
+        
+        // Validate step
+        function validateStep(step) {
+            switch(step) {
+                case 1:
+                    const name = document.getElementById('builderName').value;
+                    const email = document.getElementById('builderEmail').value;
+                    const phone = document.getElementById('builderPhone').value;
+                    const location = document.getElementById('builderLocation').value;
+                    
+                    return name && email && phone && location;
+                case 2:
+                    return resumeData.experiences.length > 0;
+                case 3:
+                    return resumeData.education.length > 0;
+                case 4:
+                    return resumeData.skills.length > 0;
+                default:
+                    return true;
+            }
+        }
+        
+        // Save step data
+        function saveStepData(step) {
+            switch(step) {
+                case 1:
+                    resumeData.personalInfo = {
+                        name: document.getElementById('builderName').value,
+                        email: document.getElementById('builderEmail').value,
+                        phone: document.getElementById('builderPhone').value,
+                        location: document.getElementById('builderLocation').value,
+                        linkedin: document.getElementById('builderLinkedIn').value,
+                        portfolio: document.getElementById('builderPortfolio').value
+                    };
+                    break;
+                // Experiences and education are saved when added
+                // Skills are saved when added
+            }
+        }
+        
+        // Add Experience
+        addExperience.addEventListener('click', () => {
+            const experienceId = Date.now();
+            const experienceItem = document.createElement('div');
+            experienceItem.className = 'experience-item';
+            experienceItem.setAttribute('data-id', experienceId);
+            experienceItem.innerHTML = `
+                <div class="item-header">
+                    <div>
+                        <div class="item-title">New Experience</div>
+                        <div class="item-date">Present</div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="item-btn edit" onclick="editExperience(${experienceId})"><i class="fas fa-edit"></i></button>
+                        <button class="item-btn delete" onclick="deleteExperience(${experienceId})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="item-description">Description of your role and achievements</div>
+            `;
+            experienceContainer.appendChild(experienceItem);
+            
+            // Add to resume data
+            resumeData.experiences.push({
+                id: experienceId,
+                title: 'New Experience',
+                company: '',
+                location: '',
+                startDate: '',
+                endDate: 'Present',
+                description: 'Description of your role and achievements'
+            });
+        });
+        
+        // Add Education
+        addEducation.addEventListener('click', () => {
+            const educationId = Date.now();
+            const educationItem = document.createElement('div');
+            educationItem.className = 'education-item';
+            educationItem.setAttribute('data-id', educationId);
+            educationItem.innerHTML = `
+                <div class="item-header">
+                    <div>
+                        <div class="item-title">New Education</div>
+                        <div class="item-date">Present</div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="item-btn edit" onclick="editEducation(${educationId})"><i class="fas fa-edit"></i></button>
+                        <button class="item-btn delete" onclick="deleteEducation(${educationId})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="item-description">Degree, field of study, and achievements</div>
+            `;
+            educationContainer.appendChild(educationItem);
+            
+            // Add to resume data
+            resumeData.education.push({
+                id: educationId,
+                institution: 'New Education',
+                degree: '',
+                field: '',
+                startDate: '',
+                endDate: 'Present',
+                description: 'Degree, field of study, and achievements'
+            });
+        });
+        
+        // Add Skill
+        skillInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && skillInput.value.trim()) {
+                e.preventDefault();
+                
+                const skill = skillInput.value.trim();
+                const skillId = Date.now();
+                
+                const skillTag = document.createElement('div');
+                skillTag.className = 'skill-tag';
+                skillTag.setAttribute('data-id', skillId);
+                skillTag.innerHTML = `
+                    ${skill}
+                    <i class="fas fa-times" onclick="removeSkill(${skillId})"></i>
+                `;
+                skillsContainer.appendChild(skillTag);
+                
+                // Add to resume data
+                resumeData.skills.push({
+                    id: skillId,
+                    name: skill
+                });
+                
+                // Clear input
+                skillInput.value = '';
+            }
+        });
+        
+        // Update Resume Preview
+        function updateResumePreview() {
+            // Update personal info
+            document.getElementById('previewName').textContent = resumeData.personalInfo.name || 'John Doe';
+            
+            const contactInfo = [];
+            if (resumeData.personalInfo.email) contactInfo.push(resumeData.personalInfo.email);
+            if (resumeData.personalInfo.phone) contactInfo.push(resumeData.personalInfo.phone);
+            if (resumeData.personalInfo.location) contactInfo.push(resumeData.personalInfo.location);
+            if (resumeData.personalInfo.linkedin) contactInfo.push('LinkedIn: ' + resumeData.personalInfo.linkedin);
+            
+            document.getElementById('previewContact').innerHTML = contactInfo.map(info => 
+                `<span>${info}</span>`
+            ).join(' | ');
+            
+            // Update experiences
+            const experienceHTML = resumeData.experiences.map(exp => `
+                <div class="preview-item">
+                    <div class="preview-item-header">
+                        <strong>${exp.title}</strong>
+                        <span>${exp.startDate} - ${exp.endDate}</span>
+                    </div>
+                    <div class="preview-item-details">${exp.description}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('previewExperience').innerHTML = experienceHTML || '<p>No experience added yet</p>';
+            
+            // Update education
+            const educationHTML = resumeData.education.map(edu => `
+                <div class="preview-item">
+                    <div class="preview-item-header">
+                        <strong>${edu.institution}</strong>
+                        <span>${edu.startDate} - ${edu.endDate}</span>
+                    </div>
+                    <div class="preview-item-details">${edu.description}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('previewEducation').innerHTML = educationHTML || '<p>No education added yet</p>';
+            
+            // Update skills
+            const skillsHTML = resumeData.skills.map(skill => 
+                `<span class="skill-tag">${skill.name}</span>`
+            ).join('');
+            
+            document.getElementById('previewSkills').innerHTML = skillsHTML || '<p>No skills added yet</p>';
+        }
+        
+        // Generate Resume
+        function generateResume() {
+            // In a real application, this would generate a downloadable resume
+            // For now, we'll just show a success message
+            showNotification('Resume generated successfully!', 'success');
+            
+            // Scroll to the top of the preview
+            document.getElementById('resumePreview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // User Authentication
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Simple validation
+            if (!email || !password) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Check if user exists in localStorage
+            const users = JSON.parse(localStorage.getItem('resumeGeniusUsers')) || [];
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                isLoggedIn = true;
+                currentUser = user;
+                authModal.style.display = 'none';
+                showNotification('Logged in successfully!', 'success');
+                
+                // Update UI for logged in state
+                document.getElementById('showLogin').textContent = 'Logout';
+                document.getElementById('showSignup').style.display = 'none';
+            } else {
+                showNotification('Invalid email or password', 'error');
+            }
+        });
+        
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            
+            // Validation
+            if (!name || !email || !password || !confirmPassword) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            // Check if user already exists
+            const users = JSON.parse(localStorage.getItem('resumeGeniusUsers')) || [];
+            if (users.some(user => user.email === email)) {
+                showNotification('User already exists with this email', 'error');
+                return;
+            }
+            
+            // Create new user
+            const newUser = { name, email, password };
+            users.push(newUser);
+            localStorage.setItem('resumeGeniusUsers', JSON.stringify(users));
+            
+            isLoggedIn = true;
+            currentUser = newUser;
+            authModal.style.display = 'none';
+            showNotification('Account created successfully!', 'success');
+            
+            // Update UI for logged in state
+            document.getElementById('showLogin').textContent = 'Logout';
+            document.getElementById('showSignup').style.display = 'none';
+        });
+        
+        // Logout functionality
+        document.getElementById('showLogin').addEventListener('click', (e) => {
+            if (isLoggedIn) {
+                isLoggedIn = false;
+                currentUser = null;
+                document.getElementById('showLogin').textContent = 'Login';
+                document.getElementById('showSignup').style.display = 'block';
+                showNotification('Logged out successfully', 'success');
+                e.preventDefault();
+            }
+        });
+        
+        // Show notification function
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = type === 'success' ? 'notification' : 'notification error';
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Download PDF functionality
+        document.getElementById('downloadPdf').addEventListener('click', function() {
+            showNotification('Generating PDF report...', 'success');
+            
+            const { jsPDF } = window.jspdf;
+            
+            html2canvas(resultsSection).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('resume-analysis-report.pdf');
+                
+                showNotification('PDF report downloaded successfully!', 'success');
+            });
+        });
+        
+        // Save Analysis functionality
+        document.getElementById('saveAnalysis').addEventListener('click', function() {
+            if (!isLoggedIn) {
+                showNotification('Please login to save your analysis', 'error');
+                authModal.style.display = 'flex';
+                return;
+            }
+            
+            const analysisData = {
+                score: parseInt(document.querySelector('.score').textContent),
+                date: new Date().toLocaleString(),
+                jobRole: document.getElementById('jobRole').value,
+                aiModel: document.getElementById('aiModel').value,
+                fileName: fileInput.files.length ? fileInput.files[0].name : 'Unknown'
+            };
+            
+            let userAnalyses = JSON.parse(localStorage.getItem(`userAnalyses_${currentUser.email}`)) || [];
+            userAnalyses.push(analysisData);
+            localStorage.setItem(`userAnalyses_${currentUser.email}`, JSON.stringify(userAnalyses));
+            
+            showNotification('Analysis saved successfully!', 'success');
+        });
+        
+        // Share Results functionality
+        document.getElementById('shareResults').addEventListener('click', function() {
+            // Use the Web Share API if available
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Resume Analysis',
+                    text: 'Check out my resume analysis from ResumeGenius!',
+                    url: window.location.href
+                })
+                .then(() => showNotification('Analysis shared successfully!', 'success'))
+                .catch(error => showNotification('Sharing failed: ' + error, 'error'));
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                showNotification('Copy this URL to share: ' + window.location.href, 'success');
+            }
+        });
+        
+        // Functions for resume builder actions (needed for inline onclick handlers)
+        window.editExperience = function(id) {
+            showNotification('Edit experience feature would open a modal in a real application', 'info');
+        };
+        
+        window.deleteExperience = function(id) {
+            resumeData.experiences = resumeData.experiences.filter(exp => exp.id !== id);
+            document.querySelector(`.experience-item[data-id="${id}"]`).remove();
+            showNotification('Experience removed', 'success');
+        };
+        
+        window.editEducation = function(id) {
+            showNotification('Edit education feature would open a modal in a real application', 'info');
+        };
+        
+        window.deleteEducation = function(id) {
+            resumeData.education = resumeData.education.filter(edu => edu.id !== id);
+            document.querySelector(`.education-item[data-id="${id}"]`).remove();
+            showNotification('Education removed', 'success');
+        };
+        
+        window.removeSkill = function(id) {
+            resumeData.skills = resumeData.skills.filter(skill => skill.id !== id);
+            document.querySelector(`.skill-tag[data-id="${id}"]`).remove();
+            showNotification('Skill removed', 'success');
+        };
+        
+        // Initialize progress bar
+        updateProgress();
+        
+        // Simulate backend connection
+        setTimeout(() => {
+            backendStatus.innerHTML = '<i class="fas fa-circle status-online"></i> Backend server connected';
+            showNotification('Backend server connected successfully', 'success');
+        }, 2000);
+    </script>
+</body>
+</html>
